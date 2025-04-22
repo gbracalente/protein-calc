@@ -15,8 +15,8 @@ let alimentos = {
   "Milanesa de soja o lentejas (mediana 80g)": 7,
   "Milanesa grade (100g)": 20,
   "Muslo de pollo": 20,
-  "Ñoquis de papa (25 unidades, plato mediano)": 6,
-  "Ñoquis de ricota (25 unidades, plato mediano)": 8,
+  "Ñoquis de papa (25 unidades - plato mediano)": 6,
+  "Ñoquis de ricota (25 unidades - plato mediano)": 8,
   "Pizza con queso (1 porción)": 10,
   "Pollo (½ pechuga)": 25,
   "Pollo (1 muslo)": 20,
@@ -28,7 +28,7 @@ let alimentos = {
   "Queso postre (1 cajita de fósforos)": 12,
   "Queso rallado (2 cdas soperas no muy colmadas)": 20,
   "Queso untable descremado o semidescremado (2 cdas. soperas no muy colmadas)": 6,
-  "Ravioles de verdura (16 unidades, plato mediano)": 7,
+  "Ravioles de verdura (16 unidades - plato mediano)": 7,
   "Yema de huevo (1 unidad)": 2,
   "Yogurt descremado o postre de leche (1 vaso o pote)": 6
 };
@@ -163,41 +163,39 @@ function eliminarDelHistorial(index) {
 }
 
 function guardarConfiguraciones() {
-  // Guardar el límite diario
-  const limiteDiario = parseFloat(document.getElementById("limite-diario").value);
-  if (!isNaN(limiteDiario) && limiteDiario >= 0) {
-    localStorage.setItem("limiteDiario", limiteDiario);
-  } else {
-    alert("Por favor, ingresa un valor válido para el límite diario.");
-    return;
-  }
+  const limiteDiario = document.getElementById('limite-diario').value;
+  let listaAlimentos = document.getElementById('editor').value;
 
-  // Guardar la lista de alimentos
-  const lineas = document.getElementById("editor").value.split("\n");
-  const nuevosAlimentos = {};
-  for (let linea of lineas) {
-    const partes = linea.split(":");
-    if (partes.length === 2) {
-      const nombre = partes[0].trim();
-      const valor = parseFloat(partes[1]);
-      if (!isNaN(valor)) {
-        nuevosAlimentos[nombre] = valor;
-      }
-    }
-  }
-  alimentos = nuevosAlimentos; // Actualizar la lista de alimentos en memoria
-  localStorage.setItem("alimentos", JSON.stringify(alimentos)); // Guardar en localStorage
+  // Ordenar la lista de alimentos alfabéticamente considerando el idioma español
+  listaAlimentos = listaAlimentos
+    .split('\n')
+    .filter(Boolean) // Filtrar líneas vacías
+    .sort((a, b) => a.localeCompare(b, 'es')) // Ordenar alfabéticamente en español
+    .join('\n');
 
-  // Recargar la lista de alimentos en la calculadora
-  cargarAlimentos();
+  // Guardar en localStorage
+  localStorage.setItem('limiteDiario', limiteDiario);
+  localStorage.setItem('listaAlimentos', listaAlimentos);
 
-  // Confirmación de guardado
-  alert("Configuraciones guardadas correctamente.");
+  alert('Configuraciones guardadas correctamente.');
 }
 
 function cargarConfiguraciones() {
-  const limiteDiario = parseFloat(localStorage.getItem("limiteDiario") || "45");
-  document.getElementById("limite-diario").value = limiteDiario;
+  const limiteDiario = localStorage.getItem('limiteDiario');
+  let listaAlimentos = localStorage.getItem('listaAlimentos');
+
+  if (limiteDiario) {
+    document.getElementById('limite-diario').value = limiteDiario;
+  }
+
+  if (listaAlimentos) {
+    listaAlimentos = listaAlimentos
+      .split('\n')
+      .filter(Boolean) // Filtrar líneas vacías
+      .sort((a, b) => a.localeCompare(b, 'es')) // Ordenar alfabéticamente en español
+      .join('\n');
+    document.getElementById('editor').value = listaAlimentos;
+  }
 }
 
 function guardarSubtotal() {
@@ -276,8 +274,93 @@ function borrarTodoHistorial() {
   alert("El historial ha sido borrado.");
 }
 
+function cargarListaAlimentos() {
+  const listaAlimentos = localStorage.getItem('listaAlimentos');
+  const selectAlimento = document.getElementById('alimento');
+
+  if (listaAlimentos) {
+    const alimentos = listaAlimentos.split('\n').filter(Boolean); // Filtrar líneas vacías
+    alimentos.sort((a, b) => a.localeCompare(b, 'es')); // Ordenar alfabéticamente en español
+
+    selectAlimento.innerHTML = ''; // Limpiar el selector
+
+    alimentos.forEach((alimento) => {
+      const [nombre, valor] = alimento.split(':'); // Asume formato "nombre:valor"
+      if (nombre && valor) {
+        const option = document.createElement('option');
+        option.value = valor.trim();
+        option.textContent = nombre.trim();
+        selectAlimento.appendChild(option);
+      }
+    });
+  }
+}
+
+function exportarListaAlimentos() {
+  // Obtener la lista de alimentos desde localStorage
+  const listaAlimentos = localStorage.getItem('listaAlimentos');
+
+  if (!listaAlimentos) {
+    alert("No hay alimentos guardados para exportar.");
+    return;
+  }
+
+  // Crear el contenido del archivo CSV
+  const alimentosCSV = listaAlimentos
+    .split('\n')
+    .filter(Boolean) // Filtrar líneas vacías
+    .map((linea) => {
+      const [nombre, valor] = linea.split(':');
+      return `${nombre.trim()},${valor.trim()}`;
+    })
+    .join('\n');
+
+  // Crear un blob con el contenido del CSV
+  const blob = new Blob([alimentosCSV], { type: "text/csv;charset=utf-8;" });
+
+  // Crear un enlace para descargar el archivo
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", "lista_alimentos.csv");
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+
+  // Hacer clic en el enlace para descargar el archivo
+  link.click();
+
+  // Eliminar el enlace después de la descarga
+  document.body.removeChild(link);
+}
+
+function importarListaAlimentos(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const contenido = e.target.result;
+    const lineas = contenido.split("\n");
+    alimentos = {}; // Reiniciar la lista de alimentos
+
+    lineas.forEach((linea) => {
+      const [nombre, valor] = linea.split(",");
+      if (nombre && valor) {
+        alimentos[nombre.trim()] = parseFloat(valor.trim());
+      }
+    });
+
+    // Actualizar el editor y el selector de alimentos
+    cargarAlimentos();
+    alert("Lista de alimentos importada correctamente.");
+  };
+
+  reader.readAsText(file);
+}
+
 // Inicializar la aplicación
+document.addEventListener('DOMContentLoaded', cargarListaAlimentos);
+document.addEventListener('DOMContentLoaded', cargarConfiguraciones);
 cargarAlimentos();
-cargarConfiguraciones();
 cargarSubtotal();
 mostrarHistorial();
