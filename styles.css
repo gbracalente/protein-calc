@@ -1,0 +1,15 @@
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.container {
+  flex-grow: 1;
+}
+
+.sticky-footer {
+  position: relative;
+  bottom: 0;
+  width: 100%;
+}
