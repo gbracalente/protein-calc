@@ -43,44 +43,67 @@ const alimentoSel = document.getElementById("alimento");
 const editor = document.getElementById("editor");
 
 function cargarAlimentos() {
-  alimentoSel.innerHTML = '';
+  alimentoSel.innerHTML = ''; // Limpiar el selector antes de llenarlo
+
   for (let key in alimentos) {
-    const option = document.createElement("option");
-    option.value = key;
-    option.textContent = `${key} → ${alimentos[key]}g`;
+    const option = document.createElement('option');
+    option.value = alimentos[key]; // El valor debe ser la cantidad de proteínas
+    option.textContent = key; // El texto debe ser el nombre del alimento
     alimentoSel.appendChild(option);
   }
-  editor.value = Object.entries(alimentos).map(([k, v]) => `${k}:${v}`).join("\n");
 }
 
 function agregarAlimento() {
-  const nombre = alimentoSel.value;
-  const proteinas = alimentos[nombre];
-  listaElegidos.push({ nombre, proteinas });
+  const alimentoSeleccionado = alimentoSel.options[alimentoSel.selectedIndex];
+  const nombre = alimentoSeleccionado.textContent; // Nombre del alimento
+  const proteinas = parseFloat(alimentoSeleccionado.value); // Cantidad de proteínas
 
-  const li = document.createElement("li");
-  li.className = "list-group-item d-flex justify-content-between align-items-center";
-  li.innerHTML = `${nombre} <span class="badge bg-primary">${proteinas}g</span> <button class="btn btn-sm btn-danger ms-2" onclick="eliminarAlimento(this, ${proteinas})">Quitar</button>`;
-  listaEl.appendChild(li);
+  if (!isNaN(proteinas)) {
+    // Agregar el alimento a la lista visual
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    li.innerHTML = `
+      ${nombre}
+      <span class="badge bg-primary rounded-pill">${proteinas} g</span>
+    `;
 
-  total += proteinas;
-  subtotalCombinacion += proteinas;
-  actualizarTotales();
-  actualizarSubtotalCombinacion();
+    // Botón para eliminar el alimento
+    const btnEliminar = document.createElement('button');
+    btnEliminar.className = 'btn btn-danger btn-sm ms-2';
+    btnEliminar.textContent = 'Eliminar';
+    btnEliminar.onclick = () => eliminarAlimento(li, proteinas);
+
+    li.appendChild(btnEliminar);
+    listaEl.appendChild(li);
+
+    // Actualizar lista de alimentos elegidos y subtotal
+    listaElegidos.push({ nombre, proteinas });
+    subtotalCombinacion += proteinas;
+    actualizarSubtotalCombinacion();
+    actualizarTotales();
+  } else {
+    console.error('El valor del alimento seleccionado es inválido.');
+  }
 }
 
-function eliminarAlimento(btn, proteinas) {
-  total -= proteinas;
+// Llamar a cargarAlimentos al cargar la página
+document.addEventListener('DOMContentLoaded', cargarAlimentos);
+
+function eliminarAlimento(li, proteinas) {
   subtotalCombinacion -= proteinas;
-  btn.parentElement.remove();
-  listaElegidos.pop();
-  actualizarTotales();
+  listaEl.removeChild(li);
+
+  // Actualizar lista de alimentos elegidos
+  listaElegidos = listaElegidos.filter((alimento) => alimento.proteinas !== proteinas);
+
   actualizarSubtotalCombinacion();
+  actualizarTotales();
 }
 
 function actualizarTotales() {
-  totalEl.textContent = total.toFixed(2);
-  const limite = parseFloat(localStorage.getItem("limiteDiario") || "45");
+  totalEl.textContent = total.toFixed(2); // Mostrar el total en la interfaz
+
+  const limite = parseFloat(localStorage.getItem("limiteDiario") || "45"); // Límite diario
   if (total > limite) {
     estadoEl.textContent = `¡Excedido por ${(total - limite).toFixed(2)}g!`;
     estadoEl.style.color = "red";
@@ -88,7 +111,7 @@ function actualizarTotales() {
     estadoEl.textContent = `Dentro del límite (${(limite - total).toFixed(2)}g restantes)`;
     estadoEl.style.color = "green";
   }
-  guardarSubtotal();
+  guardarSubtotal(); // Guardar el total actualizado
 }
 
 function actualizarSubtotalCombinacion() {
@@ -119,8 +142,12 @@ function guardarCombinacion() {
   let historial = JSON.parse(localStorage.getItem("historialProteinas") || "[]");
   historial.push(fila);
   localStorage.setItem("historialProteinas", JSON.stringify(historial));
-  mostrarHistorial();
 
+  // Sumar el subtotal al total del día
+  total += subtotalCombinacion;
+
+  // Actualizar la interfaz y los datos
+  mostrarHistorial();
   listaEl.innerHTML = "";
   listaElegidos = [];
   subtotalCombinacion = 0;
@@ -132,6 +159,7 @@ function mostrarHistorial() {
   const tabla = document.getElementById("tabla-historial");
   tabla.innerHTML = "";
   let historial = JSON.parse(localStorage.getItem("historialProteinas") || "[]");
+
   historial.forEach((fila, index) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -176,7 +204,6 @@ function guardarConfiguraciones() {
   // Guardar en localStorage
   localStorage.setItem('limiteDiario', limiteDiario);
   localStorage.setItem('listaAlimentos', listaAlimentos);
-
   alert('Configuraciones guardadas correctamente.');
 }
 
@@ -199,23 +226,27 @@ function cargarConfiguraciones() {
 }
 
 function guardarSubtotal() {
-  const fechaHoy = new Date().toLocaleDateString();
-  localStorage.setItem("subtotalProteinas", JSON.stringify({ fecha: fechaHoy, total }));
+  const fechaHoy = new Date().toLocaleDateString(); // Fecha actual en formato local
+  const datos = {
+    total: total, // Guardar el total actual
+    fecha: fechaHoy // Guardar la fecha actual
+  };
+  localStorage.setItem("datosProteinas", JSON.stringify(datos)); // Guardar en localStorage
 }
 
 function cargarSubtotal() {
-  const data = JSON.parse(localStorage.getItem("subtotalProteinas") || "{}");
-  const fechaHoy = new Date().toLocaleDateString();
-  if (data.fecha === fechaHoy) {
-    total = data.total || 0;
+  const fechaHoy = new Date().toLocaleDateString(); // Fecha actual en formato local
+  const datos = JSON.parse(localStorage.getItem("datosProteinas") || "{}");
+
+  if (datos.fecha === fechaHoy) {
+    total = datos.total || 0; // Cargar el total guardado si es el mismo día
   } else {
-    total = 0;
+    total = 0; // Reiniciar el total si es un nuevo día
   }
-  actualizarTotales();
+  actualizarTotales(); // Actualizar la interfaz con los valores cargados
 }
 
 function exportarHistorial() {
-  // Obtener el historial desde localStorage
   const historial = JSON.parse(localStorage.getItem("historialProteinas") || "[]");
 
   if (historial.length === 0) {
@@ -223,7 +254,6 @@ function exportarHistorial() {
     return;
   }
 
-  // Crear el contenido del archivo CSV
   let csvContent = "Fecha,Alimentos,Total (g)\n";
   historial.forEach(fila => {
     const fecha = fila.fecha.replace(/,/g, ""); // Eliminar comas de la fecha
@@ -232,44 +262,31 @@ function exportarHistorial() {
     csvContent += `${fecha},${alimentos},${total}\n`;
   });
 
-  // Crear un blob con el contenido del CSV
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-
-  // Crear un enlace para descargar el archivo
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
   link.setAttribute("href", url);
   link.setAttribute("download", "historial_proteinas.csv");
   link.style.visibility = "hidden";
   document.body.appendChild(link);
-
-  // Hacer clic en el enlace para descargar el archivo
   link.click();
-
-  // Eliminar el enlace después de la descarga
   document.body.removeChild(link);
 }
 
 function borrarTodoHistorial() {
-  // Confirmación previa
   const confirmacion = confirm("¿Estás seguro de que deseas borrar todo el historial? Esta acción no se puede deshacer.");
   if (!confirmacion) {
-    return; // Salir si el usuario cancela
+    return;
   }
 
-  // Eliminar el historial del localStorage
   localStorage.removeItem("historialProteinas");
 
-  // Reiniciar el total del día si corresponde
   const fechaHoy = new Date().toLocaleDateString();
   const data = JSON.parse(localStorage.getItem("subtotalProteinas") || "{}");
   if (data.fecha === fechaHoy) {
     total = 0;
-    guardarSubtotal();
-    actualizarTotales();
   }
 
-  // Actualizar la interfaz
   mostrarHistorial();
   alert("El historial ha sido borrado.");
 }
@@ -281,7 +298,6 @@ function cargarListaAlimentos() {
   if (listaAlimentos) {
     const alimentos = listaAlimentos.split('\n').filter(Boolean); // Filtrar líneas vacías
     alimentos.sort((a, b) => a.localeCompare(b, 'es')); // Ordenar alfabéticamente en español
-
     selectAlimento.innerHTML = ''; // Limpiar el selector
 
     alimentos.forEach((alimento) => {
@@ -297,7 +313,6 @@ function cargarListaAlimentos() {
 }
 
 function exportarListaAlimentos() {
-  // Obtener la lista de alimentos desde localStorage
   const listaAlimentos = localStorage.getItem('listaAlimentos');
 
   if (!listaAlimentos) {
@@ -305,7 +320,6 @@ function exportarListaAlimentos() {
     return;
   }
 
-  // Crear el contenido del archivo CSV
   const alimentosCSV = listaAlimentos
     .split('\n')
     .filter(Boolean) // Filtrar líneas vacías
@@ -315,21 +329,14 @@ function exportarListaAlimentos() {
     })
     .join('\n');
 
-  // Crear un blob con el contenido del CSV
   const blob = new Blob([alimentosCSV], { type: "text/csv;charset=utf-8;" });
-
-  // Crear un enlace para descargar el archivo
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
   link.setAttribute("href", url);
   link.setAttribute("download", "lista_alimentos.csv");
   link.style.visibility = "hidden";
   document.body.appendChild(link);
-
-  // Hacer clic en el enlace para descargar el archivo
   link.click();
-
-  // Eliminar el enlace después de la descarga
   document.body.removeChild(link);
 }
 
@@ -350,17 +357,16 @@ function importarListaAlimentos(event) {
       }
     });
 
-    // Actualizar el editor y el selector de alimentos
     cargarAlimentos();
     alert("Lista de alimentos importada correctamente.");
   };
-
   reader.readAsText(file);
 }
 
-// Inicializar la aplicación
-document.addEventListener('DOMContentLoaded', cargarListaAlimentos);
-document.addEventListener('DOMContentLoaded', cargarConfiguraciones);
-cargarAlimentos();
-cargarSubtotal();
-mostrarHistorial();
+document.addEventListener("DOMContentLoaded", () => {
+  cargarSubtotal(); // Cargar los totales al iniciar
+  cargarAlimentos(); // Cargar la lista de alimentos
+  cargarListaAlimentos(); // Cargar el selector de alimentos
+  cargarConfiguraciones(); // Cargar configuraciones
+  mostrarHistorial(); // Mostrar el historial
+});
