@@ -81,11 +81,15 @@ function agregarAlimento() {
         <span>${nombre}</span>
         <span class="badge bg-primary rounded-pill">${proteinas} g</span>
       </div>
-      <button class="btn btn-link text-danger p-0 ms-2" onclick="eliminarAlimento(this, ${proteinas})" title="Eliminar">
-        <i class="bi bi-trash"></i>
-      </button>
     `;
 
+    const btnEliminar = document.createElement("button");
+    btnEliminar.className = "btn btn-link text-danger p-0 ms-2";
+    btnEliminar.title = "Eliminar";
+    btnEliminar.innerHTML = `<i class="bi bi-trash"></i>`;
+    btnEliminar.addEventListener("click", () => eliminarAlimento(btnEliminar, proteinas));
+
+    li.appendChild(btnEliminar);
     listaEl.appendChild(li);
 
     // Actualizar lista de alimentos elegidos y subtotal
