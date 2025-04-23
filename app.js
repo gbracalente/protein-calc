@@ -104,7 +104,8 @@ function agregarAlimento() {
 // Llamar a cargarAlimentos al cargar la página
 document.addEventListener('DOMContentLoaded', cargarAlimentos);
 
-function eliminarAlimento(li, proteinas) {
+function eliminarAlimento(button, proteinas) {
+  const li = button.closest("li"); // Obtener el elemento <li> correspondiente
   subtotalCombinacion -= proteinas;
   listaEl.removeChild(li);
 
