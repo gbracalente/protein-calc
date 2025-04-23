@@ -43,47 +43,62 @@ const alimentoSel = document.getElementById("alimento");
 const editor = document.getElementById("editor");
 
 function cargarAlimentos() {
-  alimentoSel.innerHTML = ''; // Limpiar el selector antes de llenarlo
+  const alimentosList = document.getElementById("alimentos-list");
+  alimentosList.innerHTML = ""; // Limpiar el contenedor antes de llenarlo
 
-  for (let key in alimentos) {
-    const option = document.createElement('option');
-    option.value = alimentos[key]; // El valor debe ser la cantidad de proteínas
-    option.textContent = key; // El texto debe ser el nombre del alimento
-    alimentoSel.appendChild(option);
+  for (let nombre in alimentos) {
+    const valor = alimentos[nombre];
+    const div = document.createElement("div");
+    div.className = "alimentos-item";
+    div.innerHTML = `
+      <div>
+        <input class="form-check-input" type="checkbox" value="${valor}" id="${nombre}">
+        <label class="form-check-label" for="${nombre}">
+          ${nombre} (${valor} g)
+        </label>
+      </div>
+    `;
+    alimentosList.appendChild(div);
   }
 }
 
 function agregarAlimento() {
-  const alimentoSeleccionado = alimentoSel.options[alimentoSel.selectedIndex];
-  const nombre = alimentoSeleccionado.textContent; // Nombre del alimento
-  const proteinas = parseFloat(alimentoSeleccionado.value); // Cantidad de proteínas
+  const checkboxes = document.querySelectorAll("#alimentos-list .form-check-input:checked");
+  if (checkboxes.length === 0) {
+    alert("Por favor, selecciona al menos un alimento.");
+    return;
+  }
 
-  if (!isNaN(proteinas)) {
+  checkboxes.forEach((checkbox) => {
+    const nombre = checkbox.id; // El ID del checkbox es el nombre del alimento
+    const proteinas = parseFloat(checkbox.value); // El valor del checkbox es la cantidad de proteínas
+
     // Agregar el alimento a la lista visual
-    const li = document.createElement('li');
-    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    const li = document.createElement("li");
+    li.className = "list-group-item d-flex justify-content-between align-items-center";
     li.innerHTML = `
-      ${nombre}
-      <span class="badge bg-primary rounded-pill">${proteinas} g</span>
+      <div class="d-flex justify-content-between w-100">
+        <span>${nombre}</span>
+        <span class="badge bg-primary rounded-pill">${proteinas} g</span>
+      </div>
+      <button class="btn btn-link text-danger p-0 ms-2" onclick="eliminarAlimento(this, ${proteinas})" title="Eliminar">
+        <i class="bi bi-trash"></i>
+      </button>
     `;
 
-    // Botón para eliminar el alimento
-    const btnEliminar = document.createElement('button');
-    btnEliminar.className = 'btn btn-danger btn-sm ms-2';
-    btnEliminar.textContent = 'Eliminar';
-    btnEliminar.onclick = () => eliminarAlimento(li, proteinas);
-
-    li.appendChild(btnEliminar);
     listaEl.appendChild(li);
 
     // Actualizar lista de alimentos elegidos y subtotal
     listaElegidos.push({ nombre, proteinas });
     subtotalCombinacion += proteinas;
-    actualizarSubtotalCombinacion();
-    actualizarTotales();
-  } else {
-    console.error('El valor del alimento seleccionado es inválido.');
-  }
+  });
+
+  // Actualizar subtotales y totales
+  actualizarSubtotalCombinacion();
+  actualizarTotales();
+
+  // Desmarcar los checkboxes después de agregar
+  checkboxes.forEach((checkbox) => (checkbox.checked = false));
 }
 
 // Llamar a cargarAlimentos al cargar la página
@@ -111,7 +126,8 @@ function actualizarTotales() {
     estadoEl.textContent = `Dentro del límite (${(limite - total).toFixed(2)}g restantes)`;
     estadoEl.style.color = "green";
   }
-  guardarSubtotal(); // Guardar el total actualizado
+
+  guardarSubtotal();
 }
 
 function actualizarSubtotalCombinacion() {
@@ -136,9 +152,10 @@ function actualizarLista() {
 }
 
 function guardarCombinacion() {
-  const fecha = new Date().toLocaleString();
-  const alimentosDetalle = listaElegidos.map(a => `${a.nombre} (${a.proteinas}g)`).join(", ");
+  const fecha = new Date().toLocaleString(); // Fecha y hora actual
+  const alimentosDetalle = listaElegidos.map(a => `${a.nombre} ${a.proteinas}g`).join(", "); // Alimentos en una sola línea
   const fila = { fecha, subtotal: subtotalCombinacion, alimentos: alimentosDetalle };
+
   let historial = JSON.parse(localStorage.getItem("historialProteinas") || "[]");
   historial.push(fila);
   localStorage.setItem("historialProteinas", JSON.stringify(historial));
@@ -148,7 +165,7 @@ function guardarCombinacion() {
 
   // Actualizar la interfaz y los datos
   mostrarHistorial();
-  listaEl.innerHTML = "";
+  listaEl.innerHTML = ""; // Limpiar la lista de alimentos seleccionados
   listaElegidos = [];
   subtotalCombinacion = 0;
   actualizarSubtotalCombinacion();
@@ -157,17 +174,22 @@ function guardarCombinacion() {
 
 function mostrarHistorial() {
   const tabla = document.getElementById("tabla-historial");
-  tabla.innerHTML = "";
-  let historial = JSON.parse(localStorage.getItem("historialProteinas") || "[]");
+  tabla.innerHTML = ""; // Limpiar la tabla antes de llenarla
+
+  const historial = JSON.parse(localStorage.getItem("historialProteinas") || "[]");
 
   historial.forEach((fila, index) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${fila.fecha}</td>
-      <td>${fila.alimentos}</td>
+      <td>
+        <strong>${fila.fecha}</strong><br>
+        ${fila.alimentos}
+      </td>
       <td>${fila.subtotal} g</td>
       <td>
-        <button class="btn btn-danger btn-sm" onclick="eliminarDelHistorial(${index})">Eliminar</button>
+        <button class="btn btn-link text-danger p-0" onclick="eliminarDelHistorial(${index})" title="Eliminar">
+          <i class="bi bi-trash"></i>
+        </button>
       </td>
     `;
     tabla.appendChild(tr);
@@ -177,51 +199,77 @@ function mostrarHistorial() {
 function eliminarDelHistorial(index) {
   let historial = JSON.parse(localStorage.getItem("historialProteinas") || "[]");
   const filaEliminada = historial[index];
-
   const fechaHoy = new Date().toLocaleDateString();
+
+  // Actualizar el total si la entrada eliminada pertenece al día actual
   if (filaEliminada.fecha.startsWith(fechaHoy)) {
     total -= filaEliminada.subtotal;
     if (total < 0) total = 0;
     guardarSubtotal();
     actualizarTotales();
   }
+
+  // Eliminar la entrada del historial
   historial.splice(index, 1);
   localStorage.setItem("historialProteinas", JSON.stringify(historial));
+
+  // Actualizar la tabla del historial
   mostrarHistorial();
 }
 
 function guardarConfiguraciones() {
-  const limiteDiario = document.getElementById('limite-diario').value;
-  let listaAlimentos = document.getElementById('editor').value;
+  const limiteDiario = document.getElementById("limite-diario").value;
+  let listaAlimentos = document.getElementById("editor").value;
 
-  // Ordenar la lista de alimentos alfabéticamente considerando el idioma español
+  // Ordenar la lista de alimentos alfabéticamente
   listaAlimentos = listaAlimentos
-    .split('\n')
+    .split("\n")
     .filter(Boolean) // Filtrar líneas vacías
-    .sort((a, b) => a.localeCompare(b, 'es')) // Ordenar alfabéticamente en español
-    .join('\n');
+    .sort((a, b) => a.localeCompare(b, "es")) // Ordenar alfabéticamente en español
+    .join("\n");
 
   // Guardar en localStorage
-  localStorage.setItem('limiteDiario', limiteDiario);
-  localStorage.setItem('listaAlimentos', listaAlimentos);
-  alert('Configuraciones guardadas correctamente.');
+  localStorage.setItem("limiteDiario", limiteDiario);
+  localStorage.setItem("listaAlimentos", listaAlimentos);
+
+  // Actualizar el objeto `alimentos`
+  alimentos = {};
+  listaAlimentos.split("\n").forEach((linea) => {
+    const [nombre, valor] = linea.split(":");
+    if (nombre && valor) {
+      alimentos[nombre.trim()] = parseFloat(valor.trim());
+    }
+  });
+
+  cargarAlimentos(); // Actualizar la lista de alimentos en el contenedor
+  alert("Configuraciones guardadas correctamente.");
 }
 
 function cargarConfiguraciones() {
-  const limiteDiario = localStorage.getItem('limiteDiario');
-  let listaAlimentos = localStorage.getItem('listaAlimentos');
+  const limiteDiario = localStorage.getItem("limiteDiario");
+  let listaAlimentos = localStorage.getItem("listaAlimentos");
 
   if (limiteDiario) {
-    document.getElementById('limite-diario').value = limiteDiario;
+    document.getElementById("limite-diario").value = limiteDiario;
   }
 
   if (listaAlimentos) {
     listaAlimentos = listaAlimentos
-      .split('\n')
+      .split("\n")
       .filter(Boolean) // Filtrar líneas vacías
-      .sort((a, b) => a.localeCompare(b, 'es')) // Ordenar alfabéticamente en español
-      .join('\n');
-    document.getElementById('editor').value = listaAlimentos;
+      .join("\n");
+    document.getElementById("editor").value = listaAlimentos;
+
+    // Actualizar el objeto `alimentos` con los datos cargados
+    alimentos = {};
+    listaAlimentos.split("\n").forEach((linea) => {
+      const [nombre, valor] = linea.split(":");
+      if (nombre && valor) {
+        alimentos[nombre.trim()] = parseFloat(valor.trim());
+      }
+    });
+
+    cargarAlimentos(); // Actualizar la lista de alimentos en el contenedor
   }
 }
 
@@ -237,7 +285,6 @@ function guardarSubtotal() {
 function cargarSubtotal() {
   const fechaHoy = new Date().toLocaleDateString(); // Fecha actual en formato local
   const datos = JSON.parse(localStorage.getItem("datosProteinas") || "{}");
-
   if (datos.fecha === fechaHoy) {
     total = datos.total || 0; // Cargar el total guardado si es el mismo día
   } else {
@@ -248,7 +295,6 @@ function cargarSubtotal() {
 
 function exportarHistorial() {
   const historial = JSON.parse(localStorage.getItem("historialProteinas") || "[]");
-
   if (historial.length === 0) {
     alert("No hay datos en el historial para exportar.");
     return;
@@ -278,7 +324,6 @@ function borrarTodoHistorial() {
   if (!confirmacion) {
     return;
   }
-
   localStorage.removeItem("historialProteinas");
 
   const fechaHoy = new Date().toLocaleDateString();
@@ -293,13 +338,12 @@ function borrarTodoHistorial() {
 
 function cargarListaAlimentos() {
   const listaAlimentos = localStorage.getItem('listaAlimentos');
-  const selectAlimento = document.getElementById('alimento');
+  const selectAlimento = document.getElementById('alimentos-list');
 
   if (listaAlimentos) {
     const alimentos = listaAlimentos.split('\n').filter(Boolean); // Filtrar líneas vacías
     alimentos.sort((a, b) => a.localeCompare(b, 'es')); // Ordenar alfabéticamente en español
     selectAlimento.innerHTML = ''; // Limpiar el selector
-
     alimentos.forEach((alimento) => {
       const [nombre, valor] = alimento.split(':'); // Asume formato "nombre:valor"
       if (nombre && valor) {
@@ -314,29 +358,43 @@ function cargarListaAlimentos() {
 
 function exportarListaAlimentos() {
   const listaAlimentos = localStorage.getItem('listaAlimentos');
-
   if (!listaAlimentos) {
     alert("No hay alimentos guardados para exportar.");
     return;
   }
 
+  // Procesar los datos para generar el CSV
   const alimentosCSV = listaAlimentos
     .split('\n')
     .filter(Boolean) // Filtrar líneas vacías
     .map((linea) => {
-      const [nombre, valor] = linea.split(':');
-      return `${nombre.trim()},${valor.trim()}`;
+      const [nombre, valor] = linea.split(',');
+      if (nombre && valor) {
+        // Escapar comas y caracteres especiales en el nombre
+        const nombreEscapado = `"${nombre.trim().replace(/"/g, '""')}"`;
+        const valorEscapado = valor.trim();
+        return `${nombreEscapado},${valorEscapado}`;
+      }
+      return null;
     })
+    .filter(Boolean) // Filtrar líneas inválidas
     .join('\n');
 
-  const blob = new Blob([alimentosCSV], { type: "text/csv;charset=utf-8;" });
+  // Crear un blob con el contenido del CSV y codificación UTF-8
+  const blob = new Blob(["\uFEFF" + alimentosCSV], { type: "text/csv;charset=utf-8;" });
+
+  // Crear un enlace para descargar el archivo
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
   link.setAttribute("href", url);
   link.setAttribute("download", "lista_alimentos.csv");
   link.style.visibility = "hidden";
   document.body.appendChild(link);
+
+  // Hacer clic en el enlace para descargar el archivo
   link.click();
+
+  // Eliminar el enlace después de la descarga
   document.body.removeChild(link);
 }
 
@@ -349,18 +407,16 @@ function importarListaAlimentos(event) {
     const contenido = e.target.result;
     const lineas = contenido.split("\n");
     alimentos = {}; // Reiniciar la lista de alimentos
-
     lineas.forEach((linea) => {
       const [nombre, valor] = linea.split(",");
       if (nombre && valor) {
         alimentos[nombre.trim()] = parseFloat(valor.trim());
       }
     });
-
     cargarAlimentos();
     alert("Lista de alimentos importada correctamente.");
   };
-  reader.readAsText(file);
+  reader.readAsText(file, "UTF-8"); // Asegurar la lectura en UTF-8
 }
 
 document.addEventListener("DOMContentLoaded", () => {
