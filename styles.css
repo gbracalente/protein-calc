@@ -1,15 +1,32 @@
-body {
+.list-group-item {
   display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.container {
-  flex-grow: 1;
-}
-
-.sticky-footer {
-  position: relative;
-  bottom: 0;
+.list-group-item .d-flex {
   width: 100%;
+}
+
+.list-group-item span:first-child {
+  flex: 1; /* Nombre del alimento ocupa el espacio disponible */
+  text-align: left;
+}
+
+.list-group-item span:last-child {
+  flex: 0; /* Gramos alineados a la derecha */
+  text-align: right;
+  min-width: 50px; /* Asegurar un ancho mínimo para los gramos */
+}
+
+.btn-link {
+  text-decoration: none; /* Eliminar subrayado */
+  padding: 0; /* Eliminar padding adicional */
+  width: auto; /* Asegurar que el ancho sea automático */
+  height: auto; /* Asegurar que la altura sea automática */
+}
+
+.btn-link i {
+  font-size: 1.2rem; /* Tamaño del ícono */
+  display: inline-block; /* Asegurar que el ícono ocupe espacio */
 }
