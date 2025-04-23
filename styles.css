@@ -30,3 +30,45 @@
   font-size: 1.2rem; /* Tamaño del ícono */
   display: inline-block; /* Asegurar que el ícono ocupe espacio */
 }
+
+/* Contenedor de cada alimento */
+.alimentos-item {
+  display: flex;
+  align-items: center; /* Alinear verticalmente el checkbox y el texto */
+  gap: 10px; /* Espaciado entre el checkbox y el texto */
+  padding: 8px 10px; /* Espaciado interno */
+  border: 1px solid #ddd; /* Borde para separar los elementos */
+  border-radius: 5px; /* Bordes redondeados */
+  background-color: #f9f9f9; /* Fondo claro */
+  margin-bottom: 5px; /* Espaciado entre los elementos */
+}
+
+.alimentos-item:hover {
+  background-color: #f1f1f1; /* Fondo más claro al pasar el cursor */
+}
+
+/* Checkbox */
+.alimentos-item .form-check-input {
+  flex-shrink: 0; /* Evitar que el checkbox se reduzca */
+  margin: 0; /* Eliminar márgenes predeterminados */
+  width: 20px; /* Tamaño del checkbox */
+  height: 20px; /* Tamaño del checkbox */
+}
+
+/* Texto del alimento */
+.alimentos-item .form-check-label {
+  flex: 1; /* Ocupa el espacio restante */
+  font-size: 14px; /* Tamaño de fuente ajustado para móviles */
+  line-height: 1.5; /* Altura de línea para mejor legibilidad */
+  white-space: nowrap; /* Evitar que el texto se divida en varias líneas */
+  overflow: hidden; /* Ocultar texto que no cabe */
+  text-overflow: ellipsis; /* Agregar "..." al final si el texto es muy largo */
+}
+
+.alimentos-container {
+  max-height: 200px; /* Altura fija del contenedor */
+  overflow-y: auto; /* Habilitar scroll vertical */
+  border: 1px solid #ddd; /* Borde para separar visualmente */
+  background-color: #fff; /* Fondo blanco para contraste */
+  padding: 10px; /* Espaciado interno */
+}
