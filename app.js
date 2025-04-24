@@ -48,17 +48,18 @@ function cargarAlimentos() {
 
   for (let nombre in alimentos) {
     const valor = alimentos[nombre];
-    const div = document.createElement("div");
-    div.className = "alimentos-item";
-    div.innerHTML = `
-      <div>
-        <input class="form-check-input" type="checkbox" value="${valor}" id="${nombre}">
-        <label class="form-check-label" for="${nombre}">
-          ${nombre} (${valor} g)
+    const li = document.createElement("li");
+    li.className = "list-group-item list-group-item-success d-flex align-items-center justify-content-between";
+    li.innerHTML = `
+      <div class="d-flex align-items-center">
+        <input class="form-check-input me-2" type="checkbox" value="${valor}" id="${nombre}">
+        <label class="form-check-label me-auto" for="${nombre}">
+          ${nombre}
         </label>
       </div>
+      <span class="badge bg-primary">${valor} g</span>
     `;
-    alimentosList.appendChild(div);
+    alimentosList.appendChild(li);
   }
 }
 
@@ -73,7 +74,7 @@ function agregarAlimento() {
     const nombre = checkbox.id; // El ID del checkbox es el nombre del alimento
     const proteinas = parseFloat(checkbox.value); // El valor del checkbox es la cantidad de proteínas
 
-    // Agregar el alimento a la lista visual
+    // Crear el elemento de la lista
     const li = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between align-items-center";
     li.innerHTML = `
@@ -81,15 +82,11 @@ function agregarAlimento() {
         <span>${nombre}</span>
         <span class="badge bg-primary rounded-pill">${proteinas} g</span>
       </div>
+      <button class="btn btn-link text-danger p-0 ms-2" onclick="eliminarAlimento(this, ${proteinas})" title="Eliminar">
+        <i class="bi bi-trash"></i>
+      </button>
     `;
 
-    const btnEliminar = document.createElement("button");
-    btnEliminar.className = "btn btn-link text-danger p-0 ms-2";
-    btnEliminar.title = "Eliminar";
-    btnEliminar.innerHTML = `<i class="bi bi-trash"></i>`;
-    btnEliminar.addEventListener("click", () => eliminarAlimento(btnEliminar, proteinas));
-
-    li.appendChild(btnEliminar);
     listaEl.appendChild(li);
 
     // Actualizar lista de alimentos elegidos y subtotal
