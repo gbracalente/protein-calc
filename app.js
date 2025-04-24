@@ -57,7 +57,7 @@ function cargarAlimentos() {
           ${nombre}
         </label>
       </div>
-      <span class="badge bg-primary">${valor} g</span>
+      <span class="badge bg-primary rounded-pill">${valor} g</span>
     `;
     alimentosList.appendChild(li);
   }
@@ -80,8 +80,8 @@ function agregarAlimento() {
     li.innerHTML = `
       <div class="d-flex justify-content-between w-100">
         <span>${nombre}</span>
+        </div>
         <span class="badge bg-primary rounded-pill">${proteinas} g</span>
-      </div>
       <button class="btn btn-link text-danger p-0 ms-2" onclick="eliminarAlimento(this, ${proteinas})" title="Eliminar">
         <i class="bi bi-trash"></i>
       </button>
