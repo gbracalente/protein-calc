@@ -1,7 +1,16 @@
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh; /* Altura completa de la ventana */
+  overflow: hidden; /* Evitar que el scroll sea de la pantalla */
+}
+
 .list-group-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 10px 15px; /* Ajustar el espaciado interno */
+  border-radius: 5px; /* Bordes redondeados */
 }
 
 .list-group-item .d-flex {
@@ -11,12 +20,36 @@
 .list-group-item span:first-child {
   flex: 1; /* Nombre del alimento ocupa el espacio disponible */
   text-align: left;
+  white-space: nowrap; /* Evitar que el texto se divida en varias líneas */
+  overflow: hidden; /* Ocultar texto que no cabe */
+  text-overflow: ellipsis; /* Agregar "..." al final si el texto es muy largo */
 }
 
 .list-group-item span:last-child {
   flex: 0; /* Gramos alineados a la derecha */
   text-align: right;
   min-width: 50px; /* Asegurar un ancho mínimo para los gramos */
+}
+
+.list-group-item .form-check-input {
+  flex-shrink: 0; /* Evitar que el checkbox se reduzca */
+  margin-right: 10px; /* Espaciado entre el checkbox y el texto */
+  width: 20px; /* Tamaño del checkbox */
+  height: 20px;
+}
+
+.list-group-item .form-check-label {
+  flex: 1; /* Ocupa el espacio restante */
+  font-size: 14px; /* Tamaño de fuente ajustado */
+  line-height: 1.5; /* Mejor legibilidad */
+  margin-right: 10px; /* Espaciado entre el texto y el badge */
+}
+
+.list-group-item .badge {
+  flex-shrink: 0; /* Evitar que el badge se reduzca */
+  font-size: 14px; /* Tamaño del badge */
+  padding: 5px 10px; /* Espaciado interno del badge */
+  white-space: nowrap; /* Evitar que el texto del badge se divida */
 }
 
 .btn-link {
@@ -66,9 +99,18 @@
 }
 
 .alimentos-container {
-  max-height: 200px; /* Altura fija del contenedor */
+  max-height: 200px; /* Altura máxima del contenedor */
   overflow-y: auto; /* Habilitar scroll vertical */
   border: 1px solid #ddd; /* Borde para separar visualmente */
   background-color: #fff; /* Fondo blanco para contraste */
   padding: 10px; /* Espaciado interno */
+  box-sizing: border-box; /* Incluir padding y borde en el tamaño total */
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Altura completa del cuerpo */
+  overflow: hidden; /* Evitar que el contenido se desborde */
+  max-width: 100%; /* Asegurar que el contenedor no se expanda más allá del ancho de la pantalla */
 }

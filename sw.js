@@ -1,4 +1,4 @@
-const CACHE_NAME = 'proteinas-v0.0.3c'; // Cambia el número de versión
+const CACHE_NAME = 'proteinas-v0.0.4'; // Cambia el número de versión
 const URLS_TO_CACHE = [
   '/protein-calc/',
   '/protein-calc/index.html',
